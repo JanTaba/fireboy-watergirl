@@ -538,7 +538,7 @@ async function findMatch(){
     let html = '<div class="card"><h2>Your Top Match</h2>'
       + '<div class="legend"><span><span class="dot" style="background:#2E6FF2"></span>'+me.name+'</span>'
       + '<span><span class="dot" style="background:#FF4D3D"></span>'+top.name+'</span></div>'
-      + '<div class="radar-wrap">' + radarSVG('match-radar', 240, [
+      + '<div class="radar-wrap">' + radarSVG('match-radar', 280, [
           {values:meVisual,  color:'#2E6FF2', opacity:0.28},
           {values:topVisual, color:'#FF4D3D', opacity:0.28}
         ]) + '</div>'
@@ -548,10 +548,12 @@ async function findMatch(){
 
     html += '<div class="card"><h2>Full Ranking</h2>';
     ranked.forEach((r, i)=>{
+      const displayPct = Math.round((r.score + 1) / 2 * 100);
       html += '<div class="match-row '+(i===0?'rank1':'')+'">'
         + '<span class="match-name">'+(i+1)+'. '+r.name+'</span>'
-        + '<span class="match-pct">'+Math.round(r.score*100)+'%</span></div>';
+        + '<span class="match-pct">'+displayPct+'%</span></div>';
     });
+
     html += '<p class="hint">Alignment is cosine similarity on z-scored axes — closer to 100% means your normalized answer patterns point in nearly the same direction.</p></div>';
 
     results.innerHTML = html;
