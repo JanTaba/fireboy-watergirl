@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Fireboy to Your Watergirl</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Karla:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F6FC;
+    --ink:#182136;
+    --water:#2E6FF2;
+    --water-dim:#7DA0EE;
+    --fire:#FF4D3D;
+    --fire-dark:#D93A2C;
+    --surface:#FFFFFF;
+    --line:#DCE4F5;
+    --muted:#7A85A0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Karla',sans-serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+  h1,h2,h3{
+    font-family:'Baloo 2',sans-serif;
+    margin:0 0 8px;
+    line-height:1.1;
+  }
+  h1{
+    font-size:32px;
+    font-weight:800;
+    background:linear-gradient(90deg, var(--fire) 0%, var(--fire) 45%, var(--water) 55%, var(--water) 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  h2{font-size:22px;font-weight:700;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--water);
+    font-weight:700;
+    margin-bottom:6px;
+    display:block;
+  }
+  .lede{color:var(--muted);font-size:15px;margin:0 0 24px;line-height:1.5;}
+  .nav{
+    display:flex;
+    gap:6px;
+    margin-bottom:28px;
+    background:var(--surface);
+    padding:5px;
+    border-radius:14px;
+    border:1px solid var(--line);
+  }
+  .nav button{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:10px 8px;
+    border-radius:10px;
+    font-family:'Karla',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--water-dim);
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .nav button.active{background:var(--water);color:#fff;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px;
+    margin-bottom:20px;
+  }
+  input[type=text]{
+    width:100%;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    font-family:'Karla',sans-serif;
+    font-size:15px;
+    background:#FBFCFF;
+    color:var(--ink);
+  }
+  input[type=text]:focus{outline:2px solid var(--water);outline-offset:1px;}
+  button.primary{
+    background:var(--fire);
+    color:#fff;
+    border:none;
+    padding:14px 22px;
+    border-radius:12px;
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    width:100%;
+    margin-top:8px;
+    transition:transform .1s, box-shadow .15s;
+    box-shadow:0 4px 0 var(--fire-dark);
+  }
+  button.primary:hover{transform:translateY(-1px);}
+  button.primary:active{transform:translateY(2px);box-shadow:0 2px 0 var(--fire-dark);}
+  button.primary:disabled{background:#C9CEDC;box-shadow:0 4px 0 #ABB1C2;cursor:not-allowed;}
+  button.secondary{
+    background:transparent;
+    border:1.5px solid var(--water);
+    color:var(--water);
+    padding:9px 16px;
+    border-radius:10px;
+    font-family:'Karla',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .question{margin-bottom:26px;}
+  .question .qlabel{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .slider-row{display:flex;align-items:center;gap:10px;}
+  input[type=range]{
+    flex:1;
+    accent-color:var(--fire);
+    height:6px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:20px;height:20px;
+    border-radius:50%;
+    background:var(--fire);
+    border:3px solid #fff;
+    box-shadow:0 0 0 1.5px var(--fire);
+    cursor:pointer;
+  }
+  .poles{
+    display:flex;
+    justify-content:space-between;
+    font-size:14px;
+    font-weight:700;
+    margin-top:8px;
+    font-family:'Baloo 2',sans-serif;
+  }
+  .poles span:first-child{color:var(--fire);}
+  .poles span:last-child{color:var(--water);}
+  .radar-wrap{display:flex;justify-content:center;margin:8px 0 20px;}
+  .match-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .match-row:last-child{border-bottom:none;}
+  .match-name{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:17px;}
+  .match-pct{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:18px;
+    color:var(--water);
+  }
+  .rank1 .match-pct{color:var(--fire);}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);}
+  th{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;}
+  td.name{font-weight:700;}
+  .empty{
+    text-align:center;
+    padding:30px 10px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;}
+  .error-box{
+    background:#FFF0EE;
+    border:1px solid #FFD0CA;
+    color:var(--fire-dark);
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:13px;
+    margin-bottom:16px;
+  }
+  .legend{display:flex;gap:16px;justify-content:center;font-size:12px;margin-bottom:6px;font-weight:700;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .badge{
+    display:inline-block;
+    background:var(--water);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:20px;
+    margin-left:8px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">Elemental Match</span>
+  <h1>Find the Fireboy to Your Watergirl</h1>
+
+  <div class="nav">
+    <button id="nav-quiz" class="active" onclick="showView('quiz')">Take the Quiz</button>
+    <button id="nav-match" onclick="showView('match')">Find My Match</button>
+  </div>
+
+  <div id="view-quiz"></div>
+  <div id="view-match" style="display:none;"></div>
+  <div id="view-admin" style="display:none;"></div>
+
+</div>
+
+<script>
+// --- simple storage shim using localStorage ---
+const storagePrefix = 'submission:';
+
+window.storage = {
+  async set(key, value, _global) {
+    localStorage.setItem(key, value);
+    return true;
+  },
+  async get(key, _global) {
+    const v = localStorage.getItem(key);
+    if (v === null) return null;
+    return { value: v };
+  },
+  async list(prefix, _global) {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) keys.push(k);
+    }
+    return { keys };
+  },
+  async delete(key, _global) {
+    localStorage.removeItem(key);
+  }
+};
+
+// --- rest of your original logic unchanged ---
+const AXES = [
+  {key:'major',   label:'Class',                lo:'CS',            hi:'Math'},
+  {key:'mathtype',label:'Math',                lo:'Number Theory', hi:'Combinatorics'},
+  {key:'board',   label:'Board Game',          lo:'MegaGem',       hi:'Camel Up'},
+  {key:'social',  label:'Social Deduction Game', lo:'Secret Hitler', hi:'Avalon'},
+  {key:'salad',   label:'Salad Order',         lo:'Jane Street Alpha Green Salad', hi:'Bean Salad'},
+  {key:'drink',   label:'Drink of Choice',     lo:'Coconut Water', hi:'Red Bull'},
+  {key:'hangout', label:'Favorite Activity',   lo:'Movie',         hi:'Escape Room'},
+  {key:'sleep',   label:'Sleep Schedule',      lo:'0 Hours',       hi:'10 Hours'}
+];
+
+let state = { name:'', answers:{} };
+AXES.forEach(a => state.answers[a.key] = 3);
+
+function slugify(name){
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+async function saveSubmission(name, answers){
+  let slug = slugify(name);
+  if(!slug){ slug = 'student-' + Date.now(); }
+  if(slug.length > 150){ slug = slug.slice(0,150); }
+  const record = { name: name.trim(), answers, ts: Date.now() };
+  let lastErr;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const result = await window.storage.set(storagePrefix + slug, JSON.stringify(record), true);
+      if(result) return record;
+      lastErr = new Error('Storage returned no result');
+    }catch(e){
+      lastErr = e;
+    }
+    await new Promise(res => setTimeout(res, 350 * (attempt+1)));
+  }
+  console.error('saveSubmission failed after retries:', lastErr);
+  throw lastErr;
+}
+async function getAllSubmissions(){
+  let list;
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      list = await window.storage.list(storagePrefix, true);
+      break;
+    }catch(e){
+      console.error('storage.list failed, attempt', attempt, e);
+      await new Promise(res => setTimeout(res, 350 * (attempt+1)));
+    }
+  }
+  if(!list || !list.keys || list.keys.length === 0) return [];
+  const out = [];
+  for(const k of list.keys){
+    try{
+      const r = await window.storage.get(k, true);
+      if(r) out.push(JSON.parse(r.value));
+    }catch(e){
+      console.error('Skipped unreadable key', k, e);
+    }
+  }
+  return out;
+}
+
+function vecOf(rec){ return AXES.map(a => rec.answers[a.key]); }
+function cosineSim(a,b){
+  let dot=0, magA=0, magB=0;
+  for(let i=0;i<a.length;i++){ dot += a[i]*b[i]; magA += a[i]*a[i]; magB += b[i]*b[i]; }
+  if(magA===0 || magB===0) return 0;
+  return dot / (Math.sqrt(magA)*Math.sqrt(magB));
+}
+function rankMatches(target, all){
+  return all
+    .filter(r => slugify(r.name) !== slugify(target.name))
+    .map(r => ({ name:r.name, score: cosineSim(vecOf(target), vecOf(r)) }))
+    .sort((a,b)=>b.score-a.score);
+}
+
+function radarPoints(values, size, maxVal){
+  const n = values.length, cx = size/2, cy = size/2, R = size*0.42;
+  const pts = [];
+  for(let i=0;i<n;i++){
+    const ang = -Math.PI/2 + i*(2*Math.PI/n);
+    const r = (values[i]/maxVal) * R;
+    pts.push([cx + r*Math.cos(ang), cy + r*Math.sin(ang)]);
+  }
+  return pts.map(p=>p.join(',')).join(' ');
+}
+function radarSVG(id, size, layers){
+  const n = AXES.length, cx=size/2, cy=size/2, R=size*0.42;
+  let grid = '';
+  for(let ring=1; ring<=5; ring++){
+    const r = R*(ring/5);
+    let pts=[];
+    for(let i=0;i<n;i++){
+      const ang = -Math.PI/2 + i*(2*Math.PI/n);
+      pts.push([cx + r*Math.cos(ang), cy + r*Math.sin(ang)].join(','));
+    }
+    grid += '<polygon points="' + pts.join(' ') + '" fill="none" stroke="#DCE4F5" stroke-width="1"/>';
+  }
+  let spokes='';
+  for(let i=0;i<n;i++){
+    const ang = -Math.PI/2 + i*(2*Math.PI/n);
+    const x = cx + R*Math.cos(ang), y = cy + R*Math.sin(ang);
+    spokes += '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="#DCE4F5" stroke-width="1"/>';
+  }
+  let polys = '';
+  layers.forEach(layer=>{
+    const pts = radarPoints(layer.values, size, 6);
+    polys += '<polygon points="'+pts+'" fill="'+layer.color+'" fill-opacity="'+(layer.opacity||0.28)+'" stroke="'+layer.color+'" stroke-width="2.5"/>';
+  });
+  return '<svg id="'+id+'" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'+grid+spokes+polys+'</svg>';
+}
+
+function showView(name){
+  ['quiz','match'].forEach(v=>{
+    document.getElementById('view-'+v).style.display = (v===name)?'block':'none';
+    document.getElementById('nav-'+v).classList.toggle('active', v===name);
+  });
+  if(name==='match') renderMatchEntry();
+}
+
+function renderQuiz(){
+  let html = '<div class="card"><h2>Step 1 — Your name</h2>'
+    + '<input type="text" id="quiz-name" placeholder="First and last name" value="'+state.name+'"></div>';
+
+  html += '<div class="card"><h2>Step 2 — Answer honestly</h2>'
+    + '<div class="radar-wrap">' + radarSVG('live-radar', 180, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.25}]) + '</div>';
+
+  AXES.forEach(a=>{
+    html += '<div class="question">'
+      + '<div class="qlabel">'+a.label+'</div>'
+      + '<div class="slider-row"><input type="range" min="1" max="6" step="1" value="'+state.answers[a.key]+'" oninput="updateAnswer(\''+a.key+'\', this.value)"></div>'
+      + '<div class="poles"><span>'+a.lo+'</span><span>'+a.hi+'</span></div>'
+      + '</div>';
+  });
+
+  html += '<button class="primary" id="submit-btn" onclick="submitQuiz()">Submit My Answers</button><div id="quiz-error"></div></div>';
+
+  document.getElementById('view-quiz').innerHTML = html;
+  document.getElementById('quiz-name').addEventListener('input', e => state.name = e.target.value);
+}
+
+function updateAnswer(key, val){
+  state.answers[key] = parseInt(val,10);
+  const svg = document.getElementById('live-radar');
+  if(svg){
+    const poly = svg.querySelector('polygon:last-child');
+    poly.setAttribute('points', radarPoints(AXES.map(a=>state.answers[a.key]), 180, 6));
+  }
+}
+
+async function submitQuiz(){
+  const name = state.name.trim();
+  const errBox = document.getElementById('quiz-error');
+  errBox.innerHTML = '';
+  if(!name){
+    errBox.innerHTML = '<div class="error-box">Add your name before submitting.</div>';
+    return;
+  }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try{
+    await saveSubmission(name, {...state.answers});
+    document.getElementById('view-quiz').innerHTML =
+      '<div class="card"><h2>You\'re in, '+name.split(' ')[0]+' 🔥💧</h2>'
+      + '<p class="lede">Your answers are saved. Head to <strong>Find My Match</strong> any time to see who lines up with you — matches improve as more classmates submit.</p>'
+      + '<div class="radar-wrap">' + radarSVG('done-radar', 180, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
+      + '<button class="secondary" onclick="showView(\'match\')">Find My Match →</button></div>';
+  }catch(e){
+    console.error('Submit failed:', e && e.message ? e.message : e);
+    btn.disabled = false;
+    btn.textContent = 'Submit My Answers';
+    const payload = JSON.stringify({ name: name, answers: state.answers });
+    errBox.innerHTML = '<div class="error-box">We couldn\'t save your answers automatically. Nothing is lost — copy the text below and send it to your teacher, or wait a moment and hit submit again.</div>'
+      + '<textarea readonly rows="3" style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1.5px solid var(--line);font-family:monospace;font-size:11px;color:var(--ink);" onclick="this.select()">' + payload + '</textarea>';
+  }
+}
+
+function renderMatchEntry(){
+  document.getElementById('view-match').innerHTML =
+    '<div class="card"><h2>Find My Match</h2>'
+    + '<p class="lede">Enter the exact name you used on the quiz.</p>'
+    + '<input type="text" id="match-name" placeholder="First and last name">'
+    + '<button class="primary" onclick="findMatch()">Show My Matches</button>'
+    + '<div id="match-error"></div></div><div id="match-results"></div>';
+}
+
+async function findMatch(){
+  const name = document.getElementById('match-name').value.trim();
+  const errBox = document.getElementById('match-error');
+  const results = document.getElementById('match-results');
+  errBox.innerHTML = ''; results.innerHTML = '';
+  if(!name){ errBox.innerHTML = '<div class="error-box">Type your name first.</div>'; return; }
+
+  results.innerHTML = '<div class="card"><p class="empty">Loading matches...</p></div>';
+  try{
+    const all = await getAllSubmissions();
+    const me = all.find(r => slugify(r.name) === slugify(name));
+    if(!me){
+      results.innerHTML = '';
+      errBox.innerHTML = '<div class="error-box">No submission found under that name. Check spelling, or take the quiz first.</div>';
+      return;
+    }
+    const ranked = rankMatches(me, all);
+    if(ranked.length === 0){
+      results.innerHTML = '<div class="card"><p class="empty">You\'re the only one who\'s submitted so far — check back once classmates fill it out.</p></div>';
+      return;
+    }
+    const top = ranked[0];
+    const topRec = all.find(r => slugify(r.name) === slugify(top.name));
+
+    let html = '<div class="card"><h2>Your Top Match</h2>'
+      + '<div class="legend"><span><span class="dot" style="background:#2E6FF2"></span>'+me.name+'</span>'
+      + '<span><span class="dot" style="background:#FF4D3D"></span>'+top.name+'</span></div>'
+      + '<div class="radar-wrap">' + radarSVG('match-radar', 200, [
+          {values:vecOf(me), color:'#2E6FF2', opacity:0.28},
+          {values:vecOf(topRec), color:'#FF4D3D', opacity:0.28}
+        ]) + '</div>'
+      + '<div style="text-align:center;"><span class="match-pct" style="font-size:26px;">'+Math.round(top.score*100)+'% aligned</span></div></div>';
+
+    html += '<div class="card"><h2>Full Ranking</h2>';
+    ranked.forEach((r, i)=>{
+      html += '<div class="match-row '+(i===0?'rank1':'')+'">'
+        + '<span class="match-name">'+(i+1)+'. '+r.name+'</span>'
+        + '<span class="match-pct">'+Math.round(r.score*100)+'%</span></div>';
+    });
+    html += '<p class="hint">Alignment is cosine similarity between answer vectors — closer to 100% means your answer patterns point in nearly the same direction.</p></div>';
+
+    results.innerHTML = html;
+  }catch(e){
+    results.innerHTML = '';
+    errBox.innerHTML = '<div class="error-box">Could not load matches right now. Try again in a moment.</div>';
+  }
+}
+
+async function renderAdmin(){
+  document.querySelector('.nav').style.display = 'none';
+  document.getElementById('view-quiz').style.display = 'none';
+  document.getElementById('view-match').style.display = 'none';
+  const el = document.getElementById('view-admin');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="card"><p class="empty">Loading roster...</p></div>';
+  try{
+    const all = await getAllSubmissions();
+    if(all.length === 0){
+      el.innerHTML = '<div class="card"><h2>Admin View</h2><p class="empty">No submissions yet.</p></div>';
+      return;
+    }
+    let rows = '';
+    all.forEach(me=>{
+      const ranked = rankMatches(me, all);
+      const top = ranked[0];
+      rows += '<tr><td class="name">'+me.name+'</td><td>'+(top?top.name:'—')+'</td><td>'+(top?Math.round(top.score*100)+'%':'—')+'</td></tr>';
+    });
+    el.innerHTML = '<div class="card"><h2>Admin View <span class="badge">'+all.length+' responses</span></h2>'
+      + '<p class="lede">Everyone\'s top match, computed live. This page is not linked anywhere in the student-facing UI.</p>'
+      + '<table><thead><tr><th>Student</th><th>Top Match</th><th>Alignment</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      + '<button class="secondary" style="margin-top:16px;" onclick="renderAdmin()">Refresh</button>'
+      + '<button class="secondary" style="margin-top:16px;margin-left:10px;background:#FFF0EE;border-color:#FFD0CA;color:#D93A2C;" onclick="clearAllData()">Clear All Responses</button></div>'
+      + '<div class="card"><h2>Manual Import</h2>'
+      + '<p class="lede">If a student got a save error, paste the text they copied here to add them in.</p>'
+      + '<input type="text" id="import-text" placeholder=\'{"name":"...","answers":{...}}\'>'
+      + '<button class="secondary" style="margin-top:10px;" onclick="manualImport()">Add This Student</button>'
+      + '<div id="import-msg"></div></div>';
+  }catch(e){
+    el.innerHTML = '<div class="card"><div class="error-box">Could not load the roster right now. Try refreshing.</div></div>';
+  }
+}
+
+async function manualImport(){
+  const raw = document.getElementById('import-text').value.trim();
+  const msg = document.getElementById('import-msg');
+  msg.innerHTML = '';
+  try{
+    const parsed = JSON.parse(raw);
+    if(!parsed.name || !parsed.answers) throw new Error('Missing name or answers');
+    await saveSubmission(parsed.name, parsed.answers);
+    msg.innerHTML = '<p class="hint" style="color:var(--water);">Added ' + parsed.name + '. Refreshing...</p>';
+    renderAdmin();
+  }catch(e){
+    console.error('Manual import failed:', e);
+    msg.innerHTML = '<div class="error-box">Could not parse or save that text. Make sure it was copied in full.</div>';
+  }
+}
+
+async function clearAllData(){
+  if(!confirm('This deletes every student submission permanently. Continue?')) return;
+  try{
+    const list = await window.storage.list(storagePrefix, true);
+    if(list && list.keys){
+      for(const k of list.keys){
+        await window.storage.delete(k, true);
+      }
+    }
+    renderAdmin();
+  }catch(e){
+    alert('Could not clear data. Try again.');
+  }
+}
+
+if(window.location.hash === '#staffonly'){
+  renderAdmin();
+}else{
+  renderQuiz();
+}
+</script>
+</body>
+</html>
