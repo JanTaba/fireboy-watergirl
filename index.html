@@ -257,9 +257,7 @@ function computeAxisStats(all){
   const stats = {};
   AXES.forEach(a => {
     const key = a.key;
-    let sum = 0;
-    let sumSq = 0;
-    let count = 0;
+    let sum = 0, sumSq = 0, count = 0;
     all.forEach(rec => {
       const v = rec.answers[key];
       if (typeof v === 'number') {
@@ -278,10 +276,6 @@ function computeAxisStats(all){
     }
   });
   return stats;
-}
-
-function vecRaw(rec){
-  return AXES.map(a => rec.answers[a.key]);
 }
 
 function vecZ(rec, stats){
@@ -359,7 +353,7 @@ async function getAllSubmissions(){
 
 // --- radar helpers ---
 function radarPoints(values, size, maxVal){
-  const n = values.length, cx = size/2, cy = size/2, R = size*0.42;
+  const n = values.length, cx = size/2, cy = size/2, R = size*0.40;
   const pts = [];
   for(let i=0;i<n;i++){
     const ang = -Math.PI/2 + i*(2*Math.PI/n);
@@ -370,7 +364,7 @@ function radarPoints(values, size, maxVal){
 }
 
 function radarSVG(id, size, layers){
-  const n = AXES.length, cx=size/2, cy=size/2, R=size*0.42;
+  const n = AXES.length, cx=size/2, cy=size/2, R=size*0.40;
 
   // grid rings
   let grid = '';
@@ -396,20 +390,20 @@ function radarSVG(id, size, layers){
   let labels = '';
   for(let i=0;i<n;i++){
     const ang = -Math.PI/2 + i*(2*Math.PI/n);
-    const labelRadius = R + 14;
+    const labelRadius = R + 10;
     const lx = cx + labelRadius*Math.cos(ang);
     const ly = cy + labelRadius*Math.sin(ang);
     const axisLabel = AXES[i].label;
-    labels += '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" dominant-baseline="middle" '
-            + 'font-family="Baloo 2, sans-serif" font-size="11" fill="#7A85A0">'
+    labels += '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" dominant-baseline="central" '
+            + 'font-family="Baloo 2, sans-serif" font-size="10" fill="#7A85A0">'
             + axisLabel + '</text>';
   }
 
-  // polygons
+  // polygons (data layers)
   let polys = '';
   layers.forEach(layer=>{
     const pts = radarPoints(layer.values, size, 7);
-    polys += '<polygon points="'+pts+'" fill="'+layer.color+'" fill-opacity="'+(layer.opacity||0.28)+'" stroke="'+layer.color+'" stroke-width="2.5"/>';
+    polys += '<polygon class="data-layer" points="'+pts+'" fill="'+layer.color+'" fill-opacity="'+(layer.opacity||0.28)+'" stroke="'+layer.color+'" stroke-width="2.5"/>';
   });
 
   return '<svg id="'+id+'" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'
@@ -431,7 +425,7 @@ function renderQuiz(){
 
   const liveValues = AXES.map(a => state.answers[a.key]);
   html += '<div class="card"><h2>Step 2 — Answer honestly</h2>'
-    + '<div class="radar-wrap">' + radarSVG('live-radar', 180, [{values:liveValues, color:'#2E6FF2', opacity:0.25}]) + '</div>';
+    + '<div class="radar-wrap">' + radarSVG('live-radar', 220, [{values:liveValues, color:'#2E6FF2', opacity:0.25}]) + '</div>';
 
   AXES.forEach(a=>{
     html += '<div class="question">'
@@ -452,8 +446,10 @@ function updateAnswer(key, val){
   const svg = document.getElementById('live-radar');
   if(svg){
     const liveValues = AXES.map(a => state.answers[a.key]);
-    const poly = svg.querySelector('polygon:last-child');
-    poly.setAttribute('points', radarPoints(liveValues, 180, 7));
+    const poly = svg.querySelector('polygon.data-layer');
+    if(poly){
+      poly.setAttribute('points', radarPoints(liveValues, 220, 7));
+    }
   }
 }
 
@@ -473,7 +469,7 @@ async function submitQuiz(){
     document.getElementById('view-quiz').innerHTML =
       '<div class="card"><h2>You\'re in, '+name.split(' ')[0]+' 🔥💧</h2>'
       + '<p class="lede">Your answers are saved. Head to <strong>Find My Match</strong> any time to see who lines up with you — matches improve as more classmates submit.</p>'
-      + '<div class="radar-wrap">' + radarSVG('done-radar', 180, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
+      + '<div class="radar-wrap">' + radarSVG('done-radar', 220, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
       + '<button class="secondary" onclick="showView(\'match\')">Find My Match →</button></div>';
   }catch(e){
     console.error('Submit failed:', e && e.message ? e.message : e);
@@ -542,7 +538,7 @@ async function findMatch(){
     let html = '<div class="card"><h2>Your Top Match</h2>'
       + '<div class="legend"><span><span class="dot" style="background:#2E6FF2"></span>'+me.name+'</span>'
       + '<span><span class="dot" style="background:#FF4D3D"></span>'+top.name+'</span></div>'
-      + '<div class="radar-wrap">' + radarSVG('match-radar', 200, [
+      + '<div class="radar-wrap">' + radarSVG('match-radar', 240, [
           {values:meVisual,  color:'#2E6FF2', opacity:0.28},
           {values:topVisual, color:'#FF4D3D', opacity:0.28}
         ]) + '</div>'
