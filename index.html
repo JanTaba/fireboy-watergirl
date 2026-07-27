@@ -237,11 +237,11 @@ const API_BASE = 'https://fireboy-backend.onrender.com'; // replace with your Re
 const AXES = [
   {key:'major',   label:'Class',             lo:'CS',                    hi:'Math'},
   {key:'mathtype',label:'Math',             lo:'Number Theory',         hi:'Combinatorics'},
-  {key:'board',   label:'Games',       lo:'MegaGem',               hi:'Camel Up'},
+  {key:'board',   label:'Games',            lo:'MegaGem',               hi:'Camel Up'},
   {key:'social',  label:'Social Deduction', lo:'Secret Hitler',         hi:'Avalon'},
   {key:'salad',   label:'Salad Order',      lo:'Alpha Green Salad',     hi:'Bean Salad'},
   {key:'drink',   label:'Drink of Choice',  lo:'Coconut Water',         hi:'Red Bull'},
-  {key:'hangout', label:'Activity',lo:'Movie',                 hi:'Escape Room'},
+  {key:'hangout', label:'Activity',         lo:'Movie',                 hi:'Escape Room'},
   {key:'sleep',   label:'Sleep Schedule',   lo:'0 Hours',               hi:'10 Hours'}
 ];
 
@@ -252,47 +252,21 @@ function slugify(name){
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 }
 
-// --- stats & z-score helpers ---
-function computeAxisStats(all){
-  const stats = {};
-  AXES.forEach(a => {
-    const key = a.key;
-    let sum = 0, sumSq = 0, count = 0;
-    all.forEach(rec => {
-      const v = rec.answers[key];
-      if (typeof v === 'number') {
-        sum += v;
-        sumSq += v * v;
-        count += 1;
-      }
-    });
-    if (count > 0) {
-      const mean = sum / count;
-      const variance = (sumSq / count) - (mean * mean);
-      const std = variance > 0 ? Math.sqrt(variance) : 1;
-      stats[key] = { mean, std };
-    } else {
-      stats[key] = { mean: 4, std: 1 }; // fallback around midpoint
-    }
-  });
-  return stats;
-}
-
-function vecZ(rec, stats){
+// --- fixed-centering helpers (origin at slider midpoint 4) ---
+function vecCentered(rec){
+  // raw [1..7] -> centered [-3..3], 4 -> 0
   return AXES.map(a => {
-    const key = a.key;
-    const raw = rec.answers[key];
-    const mean = stats[key].mean;
-    const std = stats[key].std;
-    return (raw - mean) / std;
+    const raw = rec.answers[a.key];
+    return raw - 4;
   });
 }
 
-function vecVisualZ(rec, stats){
-  const z = vecZ(rec, stats);
-  const base = 3.5; // visual midpoint on 1–7
-  return z.map(zVal => {
-    const v = base + zVal;
+function vecVisualCentered(rec){
+  // map centered [-3..3] back to visual [1..7] for radar
+  const centered = vecCentered(rec);
+  const base = 4;
+  return centered.map(c => {
+    const v = base + c;
     return Math.max(1, Math.min(7, v));
   });
 }
@@ -353,7 +327,7 @@ async function getAllSubmissions(){
 
 // --- radar helpers ---
 function radarPoints(values, size, maxVal){
-  const n = values.length, cx = size/2, cy = size/2, R = size*0.40;
+  const n = values.length, cx = size/2, cy = size/2, R = size*0.38;
   const pts = [];
   for(let i=0;i<n;i++){
     const ang = -Math.PI/2 + i*(2*Math.PI/n);
@@ -364,7 +338,7 @@ function radarPoints(values, size, maxVal){
 }
 
 function radarSVG(id, size, layers){
-  const n = AXES.length, cx=size/2, cy=size/2, R=size*0.40;
+  const n = AXES.length, cx=size/2, cy=size/2, R=size*0.38;
 
   // grid rings
   let grid = '';
@@ -386,7 +360,7 @@ function radarSVG(id, size, layers){
     spokes += '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="#DCE4F5" stroke-width="1"/>';
   }
 
-  // axis labels at outer vertices
+  // axis labels
   let labels = '';
   for(let i=0;i<n;i++){
     const ang = -Math.PI/2 + i*(2*Math.PI/n);
@@ -399,7 +373,7 @@ function radarSVG(id, size, layers){
             + axisLabel + '</text>';
   }
 
-  // polygons (data layers)
+  // polygons
   let polys = '';
   layers.forEach(layer=>{
     const pts = radarPoints(layer.values, size, 7);
@@ -468,7 +442,7 @@ async function submitQuiz(){
     await saveSubmission(name, {...state.answers});
     document.getElementById('view-quiz').innerHTML =
       '<div class="card"><h2>You\'re in, '+name.split(' ')[0]+' 🔥💧</h2>'
-      + '<p class="lede">Your answers are saved. Head to <strong>Find My Match</strong> any time to see who lines up with you — matches improve as more classmates submit.</p>'
+      + '<p class="lede">Your answers are saved. Head to <strong>Find My Match</strong> any time to see who lines up with you.</p>'
       + '<div class="radar-wrap">' + radarSVG('done-radar', 280, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
       + '<button class="secondary" onclick="showView(\'match\')">Find My Match →</button></div>';
   }catch(e){
@@ -476,7 +450,7 @@ async function submitQuiz(){
     btn.disabled = false;
     btn.textContent = 'Submit My Answers';
     const payload = JSON.stringify({ name: name, answers: state.answers });
-    errBox.innerHTML = '<div class="error-box">We couldn\'t save your answers automatically. Nothing is lost — copy the text below and send it to your teacher, or wait a moment and hit submit again.</div>'
+    errBox.innerHTML = '<div class="error-box">We couldn\'t save your answers automatically. Copy the text below and send it to your teacher, or wait and try again.</div>'
       + '<textarea readonly rows="3" style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1.5px solid var(--line);font-family:monospace;font-size:11px;color:#182136;" onclick="this.select()">' + payload + '</textarea>';
   }
 }
@@ -507,19 +481,17 @@ async function findMatch(){
       return;
     }
 
-    const stats = computeAxisStats(all);
-
-    const withZ = all.map(rec => ({
+    const withC = all.map(rec => ({
       rec,
-      z: vecZ(rec, stats)
+      v: vecCentered(rec)
     }));
-    const meZ = vecZ(me, stats);
+    const meC = vecCentered(me);
 
-    const ranked = withZ
+    const ranked = withC
       .filter(item => slugify(item.rec.name) !== slugify(me.name))
       .map(item => ({
         name: item.rec.name,
-        score: cosineSim(meZ, item.z),
+        score: cosineSim(meC, item.v),
         rec: item.rec
       }))
       .sort((a,b)=>b.score-a.score);
@@ -532,8 +504,10 @@ async function findMatch(){
     const top = ranked[0];
     const topRec = top.rec;
 
-    const meVisual  = vecVisualZ(me, stats);
-    const topVisual = vecVisualZ(topRec, stats);
+    const meVisual  = vecVisualCentered(me);
+    const topVisual = vecVisualCentered(topRec);
+
+    const topDisplayPct = Math.round((top.score + 1) / 2 * 100);
 
     let html = '<div class="card"><h2>Your Top Match</h2>'
       + '<div class="legend"><span><span class="dot" style="background:#2E6FF2"></span>'+me.name+'</span>'
@@ -543,8 +517,8 @@ async function findMatch(){
           {values:topVisual, color:'#FF4D3D', opacity:0.28}
         ]) + '</div>'
       + '<div style="text-align:center;"><span class="match-pct" style="font-size:26px;">'
-      + Math.round((top.score + 1) / 2 * 100)
-      + '% aligned (z-score match)</span></div></div>';
+      + topDisplayPct
+      + '% aligned</span></div></div>';
 
     html += '<div class="card"><h2>Full Ranking</h2>';
     ranked.forEach((r, i)=>{
@@ -553,8 +527,7 @@ async function findMatch(){
         + '<span class="match-name">'+(i+1)+'. '+r.name+'</span>'
         + '<span class="match-pct">'+displayPct+'%</span></div>';
     });
-
-    html += '<p class="hint">Alignment is cosine similarity on z-scored axes — closer to 100% means your normalized answer patterns point in nearly the same direction.</p></div>';
+    html += '<p class="hint">We center each slider at the middle value and compare the direction of your answers. Higher percentages mean your patterns lean in similar directions.</p></div>';
 
     results.innerHTML = html;
   }catch(e){
@@ -576,26 +549,26 @@ async function renderAdmin(){
       el.innerHTML = '<div class="card"><h2>Admin View</h2><p class="empty">No submissions yet.</p></div>';
       return;
     }
-    const stats = computeAxisStats(all);
-    const withZ = all.map(rec => ({ rec, z: vecZ(rec, stats) }));
+    const withC = all.map(rec => ({ rec, v: vecCentered(rec) }));
 
     let rows = '';
-    withZ.forEach(meItem=>{
+    withC.forEach(meItem=>{
       const me = meItem.rec;
-      const meZ = meItem.z;
-      const ranked = withZ
+      const meV = meItem.v;
+      const ranked = withC
         .filter(item => slugify(item.rec.name) !== slugify(me.name))
         .map(item => ({
           name: item.rec.name,
-          score: cosineSim(meZ, item.z)
+          score: cosineSim(meV, item.v)
         }))
         .sort((a,b)=>b.score-a.score);
       const top = ranked[0];
-      rows += '<tr><td class="name">'+me.name+'</td><td>'+(top?top.name:'—')+'</td><td>'+(top?Math.round((top.score + 1) / 2 * 100)+'%':'—')+'</td></tr>';
+      const displayPct = top ? Math.round((top.score + 1) / 2 * 100) : null;
+      rows += '<tr><td class="name">'+me.name+'</td><td>'+(top?top.name:'—')+'</td><td>'+(top?displayPct+'%':'—')+'</td></tr>';
     });
 
     el.innerHTML = '<div class="card"><h2>Admin View <span class="badge">'+all.length+' responses</span></h2>'
-      + '<p class="lede">Everyone\'s top match based on z-scored cosine similarity. This page is not linked anywhere in the student-facing UI.</p>'
+      + '<p class="lede">Top match for each student based on cosine similarity of centered slider answers (origin at 4). Not linked from the student UI.</p>'
       + '<table><thead><tr><th>Student</th><th>Top Match</th><th>Alignment</th></tr></thead><tbody>'+rows+'</tbody></table>'
       + '<button class="secondary" style="margin-top:16px;" onclick="renderAdmin()">Refresh</button>'
       + '<button class="secondary" style="margin-top:16px;margin-left:10px;background:#FFF0EE;border-color:#FFD0CA;color:#D93A2C;" onclick="clearAllData()">Clear All Responses</button></div>'
