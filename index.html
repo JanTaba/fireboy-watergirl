@@ -237,11 +237,11 @@ const API_BASE = 'https://fireboy-backend.onrender.com'; // replace with your Re
 const AXES = [
   {key:'major',   label:'Class',             lo:'CS',                    hi:'Math'},
   {key:'mathtype',label:'Math',             lo:'Number Theory',         hi:'Combinatorics'},
-  {key:'board',   label:'Board Game',       lo:'MegaGem',               hi:'Camel Up'},
+  {key:'board',   label:'Games',       lo:'MegaGem',               hi:'Camel Up'},
   {key:'social',  label:'Social Deduction', lo:'Secret Hitler',         hi:'Avalon'},
   {key:'salad',   label:'Salad Order',      lo:'Alpha Green Salad',     hi:'Bean Salad'},
   {key:'drink',   label:'Drink of Choice',  lo:'Coconut Water',         hi:'Red Bull'},
-  {key:'hangout', label:'Favorite Activity',lo:'Movie',                 hi:'Escape Room'},
+  {key:'hangout', label:'Activity',lo:'Movie',                 hi:'Escape Room'},
   {key:'sleep',   label:'Sleep Schedule',   lo:'0 Hours',               hi:'10 Hours'}
 ];
 
@@ -425,7 +425,7 @@ function renderQuiz(){
 
   const liveValues = AXES.map(a => state.answers[a.key]);
   html += '<div class="card"><h2>Step 2 — Answer honestly</h2>'
-    + '<div class="radar-wrap">' + radarSVG('live-radar', 220, [{values:liveValues, color:'#2E6FF2', opacity:0.25}]) + '</div>';
+    + '<div class="radar-wrap">' + radarSVG('live-radar', 280, [{values:liveValues, color:'#2E6FF2', opacity:0.25}]) + '</div>';
 
   AXES.forEach(a=>{
     html += '<div class="question">'
@@ -448,7 +448,7 @@ function updateAnswer(key, val){
     const liveValues = AXES.map(a => state.answers[a.key]);
     const poly = svg.querySelector('polygon.data-layer');
     if(poly){
-      poly.setAttribute('points', radarPoints(liveValues, 220, 7));
+      poly.setAttribute('points', radarPoints(liveValues, 280, 7));
     }
   }
 }
@@ -469,7 +469,7 @@ async function submitQuiz(){
     document.getElementById('view-quiz').innerHTML =
       '<div class="card"><h2>You\'re in, '+name.split(' ')[0]+' 🔥💧</h2>'
       + '<p class="lede">Your answers are saved. Head to <strong>Find My Match</strong> any time to see who lines up with you — matches improve as more classmates submit.</p>'
-      + '<div class="radar-wrap">' + radarSVG('done-radar', 220, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
+      + '<div class="radar-wrap">' + radarSVG('done-radar', 280, [{values:AXES.map(a=>state.answers[a.key]), color:'#2E6FF2', opacity:0.28}]) + '</div>'
       + '<button class="secondary" onclick="showView(\'match\')">Find My Match →</button></div>';
   }catch(e){
     console.error('Submit failed:', e && e.message ? e.message : e);
