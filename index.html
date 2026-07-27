@@ -542,7 +542,9 @@ async function findMatch(){
           {values:meVisual,  color:'#2E6FF2', opacity:0.28},
           {values:topVisual, color:'#FF4D3D', opacity:0.28}
         ]) + '</div>'
-      + '<div style="text-align:center;"><span class="match-pct" style="font-size:26px;">'+Math.round(top.score*100)+'% aligned (z-score match)</span></div></div>';
+      + '<div style="text-align:center;"><span class="match-pct" style="font-size:26px;">'
+      + Math.round((top.score + 1) / 2 * 100)
+      + '% aligned (z-score match)</span></div></div>';
 
     html += '<div class="card"><h2>Full Ranking</h2>';
     ranked.forEach((r, i)=>{
@@ -587,7 +589,7 @@ async function renderAdmin(){
         }))
         .sort((a,b)=>b.score-a.score);
       const top = ranked[0];
-      rows += '<tr><td class="name">'+me.name+'</td><td>'+(top?top.name:'—')+'</td><td>'+(top?Math.round(top.score*100)+'%':'—')+'</td></tr>';
+      rows += '<tr><td class="name">'+me.name+'</td><td>'+(top?top.name:'—')+'</td><td>'+(top?Math.round((top.score + 1) / 2 * 100)+'%':'—')+'</td></tr>';
     });
 
     el.innerHTML = '<div class="card"><h2>Admin View <span class="badge">'+all.length+' responses</span></h2>'
